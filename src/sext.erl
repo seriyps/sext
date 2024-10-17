@@ -35,7 +35,10 @@
 -export([pp/1]).  % for debugging only
 
 -type options() :: #{legacy => boolean(),
-                     atom_encoding => latin1 | utf8}.
+                     atom_encoding => latin1 | utf8} |
+                   boolean().
+%% legacy: boolean() - if true, encode using the old bignum format; default: false
+%% atom_encoding: latin1 | utf8 - encoding to use for atoms; default: latin1
 
 -define(rev_sext , 4).
 %%
@@ -96,6 +99,7 @@ encode(X) -> encode(X, #{}).
 %%
 %% Use only as transition support. This function will be deprecated in time.
 %% @end
+encode(X, Legacy) when is_boolean(Legacy) -> encode(X, #{legacy => Legacy});
 encode(X, Opts) when is_tuple(X)    -> encode_tuple(X, Opts);
 encode(X, Opts) when is_map(X)      -> encode_map(X, Opts);
 encode(X, Opts) when is_list(X)     -> encode_list(X, Opts);
@@ -743,6 +747,7 @@ decode_next(Elems) ->
 %% This function will raise an exception if the beginning of `Bin' is not
 %% a valid sext-encoded term.
 %% @end
+decode_next(Elems, Legacy) when is_boolean(Legacy) -> decode_next(Elems, #{legacy => Legacy});
 decode_next(<<?rev_sext,Rest/binary>>, _) -> decode_rev_sext(Rest);
 decode_next(<<?atom,Rest/binary>>, Opts) -> decode_atom(Rest, Opts);
 decode_next(<<?pid, Rest/binary>>, _) -> decode_pid(Rest);
